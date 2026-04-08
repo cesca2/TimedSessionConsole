@@ -1,6 +1,7 @@
 using Spectre.Console;
 
 namespace SessionLogger.Controllers;
+
 public abstract class BaseController
 {
     protected void DisplayMessage(string message, string color = "blue")
