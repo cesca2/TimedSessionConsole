@@ -96,7 +96,7 @@ internal class UserInterface
     }
     
 
-    private DateTime? filterSessions()
+    private string filterSessions()
     {
         var filterChoice = AnsiConsole.Prompt(
             new SelectionPrompt<FilterAction>()
@@ -108,11 +108,11 @@ internal class UserInterface
         switch (filterChoice)
             {
                 case FilterAction.AllTime:
-                    return null;
+                    return "";
                 case FilterAction.LastWeek:
-                    return DateTime.Now.AddDays(-7);
+                    return DateTime.Now.AddDays(-7).ToShortDateString();
                 case FilterAction.LastMonth:
-                    return DateTime.Now.AddMonths(-1);
+                    return DateTime.Now.AddMonths(-1).ToShortDateString();
                 case FilterAction.Custom:                    
                     var filterUnit = AnsiConsole.Prompt(new SelectionPrompt<FilterUnit>()
                     .Title("Filter by number of years, months or days?")
@@ -125,16 +125,16 @@ internal class UserInterface
                     switch(filterUnit)
                     {
                         case FilterUnit.Days:
-                            return DateTime.Now.AddDays(-length);
+                            return DateTime.Now.AddDays(-length).ToShortDateString();
                         case FilterUnit.Months:
-                            return DateTime.Now.AddMonths(-length);
+                            return DateTime.Now.AddMonths(-length).ToShortDateString();
                         case FilterUnit.Years:
-                            return DateTime.Now.AddYears(-length);
-                        default: return null;
+                            return DateTime.Now.AddYears(-length).ToShortDateString();
+                        default: return "";
                     
                     }
                     
-                default: return null;
+                default: return "";
 
             }
         
@@ -195,7 +195,7 @@ internal class UserInterface
     private async Task DeleteSession()
     {
         var filterDate = filterSessions();
-        var deletionEntries = await _sessionServiceController.GetSessions(); // (filterDate);
+        var deletionEntries = await _sessionServiceController.GetSessions(DateFilter: filterDate); // (filterDate);
         
         if (deletionEntries.Any())
         {
@@ -232,7 +232,7 @@ internal class UserInterface
     {
         var filterDate = filterSessions();
         
-        var updateEntries =  await _sessionServiceController.GetSessions(); //(filterDate);
+        var updateEntries =  await _sessionServiceController.GetSessions(DateFilter: filterDate);
         
         if (updateEntries.Any())
         {
