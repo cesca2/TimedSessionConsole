@@ -16,7 +16,6 @@ public class SessionServiceController : BaseController
         {
             url += "?LastDate=" + DateTime.Parse(DateFilter).ToString("yyyy-MM-dd");
         }
-        Console.WriteLine(url);
         var info = await apiHandler.RetrieveAPIInfo<SessionAPI>(url);
 
         return info.Select( session => new Session(type: session.Type, start: DateTime.Parse(session.Start), end: DateTime.Parse(session.End), date: DateTime.ParseExact(session.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture) )

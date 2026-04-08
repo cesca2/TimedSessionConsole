@@ -1,13 +1,14 @@
 namespace SessionLogger;
 
-internal class Enums
+internal class UserInterfaceEnums
 {
     internal enum MenuAction
     {
         ViewSessions,
         AddSession,
         DeleteSession,
-        UpdateSession
+        UpdateSession,
+        Exit
     }
 
     internal enum FilterAction

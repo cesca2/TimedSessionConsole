@@ -1,7 +1,8 @@
 using Spectre.Console;
-using static SessionLogger.Enums;
+using static SessionLogger.UserInterfaceEnums;
 using SessionLogger.Models;
 using SessionLogger.Controllers;
+
 
 namespace SessionLogger;
 
@@ -58,6 +59,13 @@ internal class UserInterface
                 case MenuAction.UpdateSession:
                     await UpdateSession();
                     break;
+                case MenuAction.Exit:
+                    if ( ConfirmAction("exit")) 
+                    {
+                        Environment.Exit(1);
+                    }
+                    break;
+
             }
 
 
@@ -173,7 +181,7 @@ internal class UserInterface
         var newSession= UserInputSession();
         newSession.DisplayDetails();
 
-        if (ConfirmAction("add this session?"))
+        if (ConfirmAction("add this session"))
         {
             var success = await _sessionServiceController.PostSession(newSession);
 
@@ -239,7 +247,7 @@ internal class UserInterface
         var sessionToUpdate = AnsiConsole.Prompt(
                 new SelectionPrompt<Session>()
                     .Title("Select a [yellow]session[/] to update:")
-                    .UseConverter(e => $"{e.SessionType}, {e.Date}, {e.Duration} ")
+                    .UseConverter(e => $"{e.SessionType, -10} {e.Date, -10}, {e.Duration, -8} ")
                     .AddChoices(updateEntries));
         
         var newSession= UserInputSession("update");
@@ -251,7 +259,7 @@ internal class UserInterface
         DisplayMessage("with");
         newSession.DisplayDetails();
         
-        if (ConfirmAction($"update this entry as detailed above?", "yellow"))
+        if (ConfirmAction($"update this entry as detailed above", "yellow"))
         {
             await _sessionServiceController.PutSession(newSession);
             DisplayMessage("Session updated");
