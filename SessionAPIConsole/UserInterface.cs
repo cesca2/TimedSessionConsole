@@ -163,30 +163,33 @@ public class UserInterface(IAnsiConsole console)
 
         var dateprompt = new TextPrompt<string>($"Enter the [blue]date (DD/MM/YYYY)[/] of the session to {message}:")
         .Validate(input =>
-            {if (!
+            {
+                if (!
             DateTime.TryParse(
                 input,
                 out _)
             || (DateTime.Parse(input).Date == DateTime.Parse("12:00").Date)) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["InvalidDateFormat"]}[/]");
-            else if ( DateTime.Parse(input).Date >= DateTime.Now.Date) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["FutureDate"]}[/]");
-            else return ValidationResult.Success();
-            })  
+                else if (DateTime.Parse(input).Date >= DateTime.Now.Date) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["FutureDate"]}[/]");
+                else return ValidationResult.Success();
+            })
         .ValidationErrorMessage($"[red]Invalid input: {_errorMessages["InvalidDateFormat"]}[/]");
-        
+
         var date = console.Prompt(dateprompt);
 
         var startprompt = new TextPrompt<DateTime>($"Enter the [green]start time (HH:MM)[/] of the session to {message}:")
         .Validate(input =>
-                 input.Date == DateTime.Parse("12:00").Date  , $"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]")
+                 input.Date == DateTime.Parse("12:00").Date, $"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]")
         .ValidationErrorMessage($"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]");
-        
+
         var startTime = console.Prompt(startprompt);
 
         var endprompt = new TextPrompt<DateTime>($"Enter the [green]end time (HH:MM)[/] of the session to {message}:")
         .Validate(input =>
-                 { if (input.Date != DateTime.Parse("12:00").Date) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]");
-                   else if (input.TimeOfDay < startTime.TimeOfDay)  return ValidationResult.Error( $"[red]Invalid input: {_errorMessages["EndTimeBeforeStart"]}, {startTime.TimeOfDay}[/]");
-                 else return ValidationResult.Success();})
+                 {
+                     if (input.Date != DateTime.Parse("12:00").Date) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]");
+                     else if (input.TimeOfDay < startTime.TimeOfDay) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["EndTimeBeforeStart"]}, {startTime.TimeOfDay}[/]");
+                     else return ValidationResult.Success();
+                 })
         .ValidationErrorMessage($"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]");
 
         var endTime = console.Prompt(endprompt);
