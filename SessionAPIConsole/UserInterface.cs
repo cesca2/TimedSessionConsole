@@ -1,24 +1,32 @@
 using SessionLogger.Controllers;
 using SessionLogger.Models;
 using Spectre.Console;
+using System.Runtime.Serialization;
 using static SessionLogger.UserInterfaceEnums;
 
 
 namespace SessionLogger;
 
 
-internal class UserInterface
+public class UserInterface(IAnsiConsole console)
 {
     private readonly SessionServiceController _sessionServiceController = new();
+    public readonly Dictionary<string, string> _errorMessages = new Dictionary<string, string>
+    {
+        ["FutureDate"] = "Date cannot be in the future",
+        ["InvalidDateFormat"] = "Date format should match (DD/MM/YYYY)",
+        ["InvalidTimeFormat"] = "Time format should match HH:MM",
+        ["EndTimeBeforeStart"] = "End time cannot be before start time"
+    };
 
     private void DisplayMessage(string message, string color = "yellow")
     {
-        AnsiConsole.MarkupLine($"[{color}]{message}[/]");
+        console.MarkupLine($"[{color}]{message}[/]");
     }
 
     private bool ConfirmAction(string actionName, string color = "yellow")
     {
-        var confirmAction = AnsiConsole.Confirm($"Are you sure you want to [{color}]{actionName}[/]?");
+        var confirmAction = console.Confirm($"Are you sure you want to [{color}]{actionName}[/]?");
 
         return confirmAction;
     }
@@ -26,7 +34,7 @@ internal class UserInterface
     {
         DisplayMessage("");
 
-        AnsiConsole.Write(
+        console.Write(
             new FigletText("Session logger"));
         DisplayMessage("");
         DisplayMessage("Welcome to the Session Logger application!", "white");
@@ -39,7 +47,7 @@ internal class UserInterface
         {
             Console.Clear();
 
-            var actionChoice = AnsiConsole.Prompt(
+            var actionChoice = console.Prompt(
                 new SelectionPrompt<MenuAction>()
                 .Title("Please select an action:")
                 .UseConverter(e => System.Text.RegularExpressions.Regex.Replace(e.ToString(), "([a-z])([A-Z])", "$1 $2"))
@@ -97,7 +105,7 @@ internal class UserInterface
         }
 
 
-        AnsiConsole.Write(table);
+        console.Write(table);
         DisplayMessage("Press Any Key to Continue.");
         Console.ReadKey();
 
@@ -106,7 +114,7 @@ internal class UserInterface
 
     private string FilterSessions()
     {
-        var filterChoice = AnsiConsole.Prompt(
+        var filterChoice = console.Prompt(
             new SelectionPrompt<FilterAction>()
             .Title("Filter date?")
             .UseConverter(e => System.Text.RegularExpressions.Regex.Replace(e.ToString(), "([a-z])([A-Z])", "$1 $2"))
@@ -122,11 +130,11 @@ internal class UserInterface
             case FilterAction.LastMonth:
                 return DateTime.Now.AddMonths(-1).ToShortDateString();
             case FilterAction.Custom:
-                var filterUnit = AnsiConsole.Prompt(new SelectionPrompt<FilterUnit>()
+                var filterUnit = console.Prompt(new SelectionPrompt<FilterUnit>()
                 .Title("Filter by number of years, months or days?")
                 .AddChoices(Enum.GetValues<FilterUnit>()));
 
-                var length = AnsiConsole.Ask<int>($"Enter the number of {filterUnit}:");
+                var length = console.Ask<int>($"Enter the number of {filterUnit}:");
 
                 Console.Clear();
 
@@ -148,26 +156,40 @@ internal class UserInterface
 
     }
 
-    private Session UserInputSession(string message = "add")
+    public Session UserInputSession(string message = "add")
     {
 
-        var type = AnsiConsole.Ask<string>($"Enter the [cyan]type[/] of session to {message}:");
+        var type = console.Ask<string>($"Enter the [cyan]type[/] of session to {message}:");
 
         var dateprompt = new TextPrompt<string>($"Enter the [blue]date (DD/MM/YYYY)[/] of the session to {message}:")
         .Validate(input =>
+            {if (!
             DateTime.TryParse(
                 input,
-                out _
-            ) && DateTime.Parse(input).Date <= DateTime.Now.Date, "[red]Please check date format matches (DD/MM/YYYY), and is not in the future[/]");
+                out _)
+            || (DateTime.Parse(input).Date == DateTime.Parse("12:00").Date)) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["InvalidDateFormat"]}[/]");
+            else if ( DateTime.Parse(input).Date >= DateTime.Now.Date) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["FutureDate"]}[/]");
+            else return ValidationResult.Success();
+            })  
+        .ValidationErrorMessage($"[red]Invalid input: {_errorMessages["InvalidDateFormat"]}[/]");
+        
+        var date = console.Prompt(dateprompt);
 
-        var date = AnsiConsole.Prompt(dateprompt);
+        var startprompt = new TextPrompt<DateTime>($"Enter the [green]start time (HH:MM)[/] of the session to {message}:")
+        .Validate(input =>
+                 input.Date == DateTime.Parse("12:00").Date  , $"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]")
+        .ValidationErrorMessage($"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]");
+        
+        var startTime = console.Prompt(startprompt);
 
-        var startTime = AnsiConsole.Ask<DateTime>($"Enter the [green]start time (HH:MM) [/] of the session to {message}:");
         var endprompt = new TextPrompt<DateTime>($"Enter the [green]end time (HH:MM)[/] of the session to {message}:")
         .Validate(input =>
-                  input > startTime, $"[red]End time must be after specified start time, {startTime.TimeOfDay}[/]");
+                 { if (input.Date != DateTime.Parse("12:00").Date) return ValidationResult.Error($"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]");
+                   else if (input.TimeOfDay < startTime.TimeOfDay)  return ValidationResult.Error( $"[red]Invalid input: {_errorMessages["EndTimeBeforeStart"]}, {startTime.TimeOfDay}[/]");
+                 else return ValidationResult.Success();})
+        .ValidationErrorMessage($"[red]Invalid input: {_errorMessages["InvalidTimeFormat"]}[/]");
 
-        var endTime = AnsiConsole.Prompt(endprompt);
+        var endTime = console.Prompt(endprompt);
 
         var newSession = new Session(type, DateTime.Parse(date), startTime, endTime);
 
@@ -207,7 +229,7 @@ internal class UserInterface
 
         if (deletionEntries.Any())
         {
-            var sessionToDelete = AnsiConsole.Prompt(
+            var sessionToDelete = console.Prompt(
                    new SelectionPrompt<Session>()
                        .Title("Select a [red]session[/] to delete:")
                        .UseConverter(e => $"{e.SessionType}, {e.Date}, {e.Duration} ")
@@ -244,7 +266,7 @@ internal class UserInterface
 
         if (updateEntries.Any())
         {
-            var sessionToUpdate = AnsiConsole.Prompt(
+            var sessionToUpdate = console.Prompt(
                     new SelectionPrompt<Session>()
                         .Title("Select a [yellow]session[/] to update:")
                         .UseConverter(e => $"{e.SessionType,-10} {e.Date,-10}, {e.Duration,-8} ")

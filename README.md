@@ -43,7 +43,7 @@ Ensure web API is running locally (see pre-requisites above)
 Run the application
 
 ```bash
-  dotnet run
+  dotnet run --project SessionAPIConsole
 ```
 
 
