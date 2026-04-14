@@ -16,9 +16,9 @@ public class SessionServiceController : BaseController
         }
         var info = await _apiHandler.RetrieveAPIInfo<SessionAPI>(url);
 
-        return info.Select(session => new Session(type: session.Type, start: DateTime.Parse(session.Start), end: DateTime.Parse(session.End), date: DateTime.ParseExact(session.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture))
+        return info.Select(session => new Session(type: session.Type, start: DateTime.Parse(session.Start), end: DateTime.Parse(session.End), date: DateTime.Parse(session.Date))
         {
-            Id = session.Id,
+            Id = session.Id.ToString(),
 
         }).ToList();
 
@@ -26,7 +26,7 @@ public class SessionServiceController : BaseController
     }
     public async Task<bool> PostSession(Session postSession)
     {
-        var post = new SessionAPI() { Type = postSession.SessionType, Start = postSession.StartTime, End = postSession.EndTime, Date = DateTime.Parse(postSession.Date).ToString("yyyy-MM-dd") };
+        var post = new SessionAPI() { Type = postSession.SessionType, Start = postSession.StartTime, End = postSession.EndTime, Date = DateTime.Parse(postSession.Date).ToString() };
         var success = await _apiHandler.PostAPIInfo(post, "Sessions");
 
         return success;
@@ -35,14 +35,14 @@ public class SessionServiceController : BaseController
 
     public async Task<bool> PutSession(Session putSession)
     {
-        var post = new SessionAPI() { Id = putSession.Id, Type = putSession.SessionType, Start = putSession.StartTime, End = putSession.EndTime, Date = DateTime.Parse(putSession.Date).ToString("yyyy-MM-dd") };
+        var post = new SessionAPI() { Id = Guid.Parse(putSession.Id), Type = putSession.SessionType, Start = putSession.StartTime, End = putSession.EndTime, Date = DateTime.Parse(putSession.Date).ToString() };
         var success = await _apiHandler.PutAPIInfo(post, $"Sessions/{putSession.Id}");
 
         return success;
 
     }
 
-    public async Task<bool> DeleteSession(int id)
+    public async Task<bool> DeleteSession(string id)
     {
         var success = await _apiHandler.DeleteAPIInfo($"Sessions/{id}");
 

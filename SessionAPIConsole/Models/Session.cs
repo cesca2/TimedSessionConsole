@@ -5,7 +5,7 @@ namespace SessionLogger.Models;
 // model for UI
 public class Session
 {
-    public int Id { get; set; } = 1;
+    public string Id { get; set; } = "1";
     public string SessionType { get; set; }
     public string Date { get; set; }
     public string StartTime { get; set; }

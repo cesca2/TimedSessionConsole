@@ -131,5 +131,6 @@ public class UserInterfaceTests
 
         Assert.That(console.Output, Does.Contain(_input._errorMessages["InvalidTimeFormat"]));
 
+
     }
 }
